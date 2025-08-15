@@ -1,0 +1,36 @@
+name: TikTok Live Check
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # tiap 5 menit, WAKTU UTC
+  workflow_dispatch:         # bisa run manual dari tab Actions
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      # Cache Playwright browser binaries biar lebih cepat/irit menit
+      - name: Cache Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ms-playwright-
+
+      - run: npm ci
+
+      - name: Install Playwright (with deps)
+        run: npx playwright install --with-deps
+
+      - name: Run one tick
+        run: ONE_TICK=true node index.js
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
