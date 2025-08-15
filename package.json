@@ -1,14 +1,10 @@
 {
-  "name": "tiktok-live-notifier",
+  "name": "tiktok-live-vercel",
   "version": "1.0.0",
-  "type": "commonjs",
-  "scripts": {
-    "start": "node index.js",
-    "one": "ONE_TICK=true node index.js"
-  },
+  "type": "module",
+  "private": true,
   "dependencies": {
-    "dotenv": "17.2.1",
-    "node-fetch": "2",
-    "playwright": "^1.46.0"
+    "@sparticuz/chromium": "^133.0.0",
+    "puppeteer-core": "^22.15.0"
   }
 }
