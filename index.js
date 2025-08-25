@@ -142,3 +142,7 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+sendTelegram(
+  "🔴 <b>TEST</b>: seolah-olah akun X sedang LIVE.\nTonton: https://www.tiktok.com/@akunX/live"
+);
