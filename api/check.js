@@ -85,7 +85,12 @@ if (req.query.ping === '1') {
   await sendTelegram('✅ Ping OK — token & env valid.');
   return res.status(200).json({ ok: true, ping: true });
 }
-
+  if (req.query.test === '1') {
+    await sendTelegram(
+      "🔴 <b>TEST</b>: seolah-olah akun X sedang LIVE.\nTonton: https://www.tiktok.com/@akunX/live"
+    );
+    return res.status(200).json({ ok: true, test: 'notif dummy terkirim' });
+  }
   
   if (!BOT_TOKEN || !CHAT_ID || ACCOUNTS.length === 0) {
     return res.status(400).json({ ok: false, error: 'Missing env: BOT_TOKEN, CHAT_ID, ACCOUNTS' });
