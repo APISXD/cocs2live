@@ -80,6 +80,12 @@ export default async function handler(req, res) {
   if (process.env.CRON_SECRET && req.query.token !== process.env.CRON_SECRET) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
+
+if (req.query.ping === '1') {
+  await sendTelegram('✅ Ping OK — token & env valid.');
+  return res.status(200).json({ ok: true, ping: true });
+}
+
   
   if (!BOT_TOKEN || !CHAT_ID || ACCOUNTS.length === 0) {
     return res.status(400).json({ ok: false, error: 'Missing env: BOT_TOKEN, CHAT_ID, ACCOUNTS' });
