@@ -1,10 +1,8 @@
-// --- Vercel config: WAJIB Node runtime, bukan Edge ---
+// --- Vercel config: WAJIB Node runtime ---
 export const config = {
-  runtime: "nodejs",   // <-- bukan "nodejs20.x"
-  maxDuration: 60      // boleh pakai ini
-  // (hapus "memory", Vercel Node Function nggak pakai field itu)
+  runtime: "nodejs",
+  maxDuration: 60
 };
-
 
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
@@ -18,6 +16,8 @@ const ACCOUNTS  = (process.env.ACCOUNTS || '')
 
 const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function sendTelegram(text) {
   const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
@@ -51,7 +51,7 @@ async function checkOne(page, username) {
   const liveUrl = `https://www.tiktok.com/@${username}/live`;
 
   await page.goto(profileUrl, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await page.waitForTimeout(1200);
+  await sleep(1500);
 
   const res = await page.evaluate(() => {
     const out = { live: false, roomId: null, title: null };
@@ -80,12 +80,12 @@ async function checkOne(page, username) {
 
 export default async function handler(req, res) {
   try {
-    // --- auth token ---
+    // auth
     if (process.env.CRON_SECRET && req.query.token !== process.env.CRON_SECRET) {
       return res.status(401).json({ ok: false, error: 'Unauthorized' });
     }
 
-    // --- mode ringan tanpa Chromium ---
+    // mode ringan
     if (req.query.ping === '1') {
       await sendTelegram('✅ Ping OK — token & env valid.');
       return res.status(200).json({ ok: true, mode: 'ping' });
@@ -96,7 +96,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, mode: 'test', user: who });
     }
 
-    // --- env wajib ---
     if (!BOT_TOKEN || !CHAT_ID || ACCOUNTS.length === 0) {
       return res.status(400).json({ ok: false, error: 'Missing env: BOT_TOKEN, CHAT_ID, ACCOUNTS' });
     }
@@ -105,11 +104,10 @@ export default async function handler(req, res) {
     const onlyUser = (req.query.user || '').trim();
     const list = onlyUser ? [onlyUser] : ACCOUNTS;
 
-    // --- launch Chromium ---
+    // launch chromium
     const executablePath = await chromium.executablePath();
-    if (!executablePath) {
-      throw new Error('Chromium executablePath is null (runtime bukan Node, atau deps kurang).');
-    }
+    if (!executablePath) throw new Error('Chromium executablePath null (runtime salah?)');
+
     const browser = await puppeteer.launch({
       args: [...chromium.args, '--no-sandbox', '--disable-dev-shm-usage'],
       defaultViewport: { width: 1280, height: 800 },
@@ -143,7 +141,7 @@ export default async function handler(req, res) {
           console.error('[checkOne error]', username, e);
           results.push({ username, error: e.message || String(e) });
         }
-        await page.waitForTimeout(1000);
+        await sleep(1000);
       }
     } finally {
       await browser.close();
