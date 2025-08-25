@@ -1,9 +1,10 @@
 // --- Vercel config: WAJIB Node runtime, bukan Edge ---
 export const config = {
-  runtime: "nodejs20.x",
-  maxDuration: 60,   // beri waktu launch chromium
-  memory: 1024       // RAM lebih lega
+  runtime: "nodejs",   // <-- bukan "nodejs20.x"
+  maxDuration: 60      // boleh pakai ini
+  // (hapus "memory", Vercel Node Function nggak pakai field itu)
 };
+
 
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
