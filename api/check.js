@@ -1,4 +1,11 @@
 // api/check.js
+export const config = {
+  runtime: "nodejs20.x", // Wajib: jangan Edge runtime
+  maxDuration: 60,       // kasih waktu max 60 detik
+  memory: 1024           // RAM lebih lega
+};
+
+
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 
