@@ -1,6 +1,8 @@
-// --- Vercel config: WAJIB Node runtime ---
+// api/check.js
+
+// -- Vercel config: WAJIB Node runtime (bukan Edge) --
 export const config = {
-  runtime: "nodejs",
+  runtime: "nodejs", // versi Node atur di Project Settings → Node.js Version (disarankan 20.x)
   maxDuration: 60
 };
 
@@ -17,6 +19,7 @@ const ACCOUNTS  = (process.env.ACCOUNTS || '')
 const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
+// puppeteer v22 TIDAK punya page.waitForTimeout, pakai sleep()
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function sendTelegram(text) {
@@ -80,12 +83,12 @@ async function checkOne(page, username) {
 
 export default async function handler(req, res) {
   try {
-    // auth
+    // --- auth token ---
     if (process.env.CRON_SECRET && req.query.token !== process.env.CRON_SECRET) {
       return res.status(401).json({ ok: false, error: 'Unauthorized' });
     }
 
-    // mode ringan
+    // --- mode ringan tanpa Chromium ---
     if (req.query.ping === '1') {
       await sendTelegram('✅ Ping OK — token & env valid.');
       return res.status(200).json({ ok: true, mode: 'ping' });
@@ -96,6 +99,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, mode: 'test', user: who });
     }
 
+    // --- env wajib ---
     if (!BOT_TOKEN || !CHAT_ID || ACCOUNTS.length === 0) {
       return res.status(400).json({ ok: false, error: 'Missing env: BOT_TOKEN, CHAT_ID, ACCOUNTS' });
     }
@@ -104,9 +108,9 @@ export default async function handler(req, res) {
     const onlyUser = (req.query.user || '').trim();
     const list = onlyUser ? [onlyUser] : ACCOUNTS;
 
-    // launch chromium
+    // --- launch Chromium ---
     const executablePath = await chromium.executablePath();
-    if (!executablePath) throw new Error('Chromium executablePath null (runtime salah?)');
+    if (!executablePath) throw new Error('Chromium executablePath null (pastikan runtime "nodejs" & deps benar)');
 
     const browser = await puppeteer.launch({
       args: [...chromium.args, '--no-sandbox', '--disable-dev-shm-usage'],
@@ -126,7 +130,7 @@ export default async function handler(req, res) {
 
           if (!DRY) {
             const key = `live:${username}`;
-            const prev = await redisGet(key);
+            const prev = await redisGet(key); // "1" atau null
             if (st.live) {
               if (prev !== '1') {
                 const title = st.title ? `\nJudul: ${st.title}` : '';
